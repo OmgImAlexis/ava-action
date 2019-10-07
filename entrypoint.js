@@ -1,32 +1,28 @@
 /* eslint-disable camelcase */
 
+const {promisify} = require('util');
 const path = require('path');
 const core = require('@actions/core');
-const exec = require('@actions/exec');
+const {exec} = require('child_process');
 const github = require('@actions/github');
 
+const promisifiedExec = promisify(exec);
 const workspace = process.env.GITHUB_WORKSPACE;
 
-// Returns results from xo command
-const runXo = async options => {
-  const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
-  let resultString = '';
+// Returns results from ava command
+const runAva = async options => {
+  const binDirPath = path.join(workspace, 'node_modules', '.bin');
+  const avaPath = path.join(binDirPath, 'ava');
+  const avaTapPath = path.join(binDirPath, 'ava-tap-json-parser');
+  const ava = `${avaPath} ${options.join(' ')}`;
+  const avaCommand = `${ava} | ${avaTapPath}`;
+  const parseStdout = ({stdout}) => JSON.parse(stdout);
 
-  const parseResults = data => {
-    resultString += data.toString();
-  };
-
-  await exec.exec(xoPath, options, {
-    cwd: workspace,
-    ignoreReturnCode: true,
-    silent: true,
-    listeners: {
-      stdout: parseResults,
-      stderr: parseResults
-    }
-  });
-
-  return JSON.parse(resultString);
+  return promisifiedExec(avaCommand, {
+    cwd: workspace
+  })
+    .then(parseStdout)
+    .catch(parseStdout);
 };
 
 const updateCheck = async ({summary, conclusion, annotations}) => {
@@ -73,11 +69,11 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
       title,
       summary:
         conclusion === 'success'
-          ? 'XO found no lint in your code.'
-          : 'XO found lint in your code.',
+          ? 'All tests passed!'
+          : 'Not all tests passed.',
       text:
         conclusion === 'success'
-          ? ':tada: XO found no lint in your code.'
+          ? ':tada: All tests passed!'
           : summary.join('\n'),
       annotations: annotations.slice(0, 49)
     }
@@ -89,88 +85,33 @@ const run = async () => {
     const annotations = [];
     const summary = [];
 
-    let warningCount = 0;
-    let errorCount = 0;
-    let conclusion = 'success';
-
-    const pkgPath = path.join(workspace, 'package.json');
-    const {eslintConfig = {}, xo = {}} = require(pkgPath);
-
-    // Only run with prettier flag if needed
-    const needsPrettier =
-      (eslintConfig &&
-        eslintConfig.plugins &&
-        eslintConfig.plugins.includes('prettier')) ||
-      xo.prettier;
-
-    // Run xo command
-    const results = await runXo([
-      '--reporter=json',
-      needsPrettier ? '--prettier' : ''
-    ]).catch(error => {
+    // Run ava command
+    const results = await runAva(['--tap']).catch(error => {
       core.setFailed(error.message);
       return [];
     });
 
-    for (const result of results) {
-      const {filePath, messages} = result;
+    const errorCount = results.fail;
+    const conclusion = errorCount >= 1 ? 'failure' : 'success';
 
-      warningCount += Number(result.warningCount);
-      errorCount += Number(result.errorCount);
+    for (const test of results.failedTests) {
+      const {path, startLine, endLine} = test;
 
-      for (const msg of messages) {
-        const {severity, ruleId: raw_details} = msg;
-        let {line, endLine} = msg;
-        let annotation_level;
-
-        // Sanity checks
-        let message = msg.message.replace(/["']/g, '`');
-        if (encodeURI(message).split(/%..|./).length - 1 >= 64) {
-          message = message.substring(0, 60) + '...';
-        }
-
-        switch (severity) {
-          case 1:
-            annotation_level = 'warning';
-            break;
-          case 2:
-            annotation_level = 'failure';
-            break;
-          default:
-            annotation_level = 'notice';
-        }
-
-        line = line || 1;
-        if (endLine < line || !endLine) {
-          endLine = line;
-        }
-        // EO - Sanity checks
-
-        annotations.push({
-          path: filePath.replace(`${workspace}/`, ''),
-          start_line: line,
-          end_line: endLine,
-          annotation_level,
-          message,
-          raw_details
-        });
-      }
-    }
-
-    if (warningCount > 0) {
-      summary.push(
-        `:warning: Found ${warningCount} warning${
-          warningCount === 1 ? '' : 's'
-        }.`
-      );
-      conclusion = 'neutral';
+      annotations.push({
+        title: name,
+        path,
+        start_line: startLine,
+        end_line: endLine,
+        annotation_level: 'failure',
+        message: `\`${test.stackTrace.stackTrace.Difference}\``
+        // raw_details: ''
+      });
     }
 
     if (errorCount > 0) {
       summary.push(
-        `:x: Found ${errorCount} error${errorCount === 1 ? '' : 's'}.`
+        `:x: ${errorCount} test${errorCount === 1 ? '' : 's'} failed.`
       );
-      conclusion = 'failure';
     }
 
     await updateCheck({summary, conclusion, annotations}).catch(error => {
@@ -178,19 +119,11 @@ const run = async () => {
     });
 
     if (errorCount > 0) {
-      core.setFailed(':x: Lint errors found!');
+      core.setFailed(`:x: Some test${errorCount === 1 ? '' : 's'} failed!`);
       return;
     }
 
-    if (warningCount > 0) {
-      // Currently doesn't work
-      // See https://github.com/actions/toolkit/tree/master/packages/core#exit-codes
-      // core.setNeutral(':x: Lint warnings found.');
-      core.warning(':x: Lint warnings found.');
-      return;
-    }
-
-    // Tools.exit.success(':white_check_mark: No lint found!');
+    // Tools.exit.success(':white_check_mark: All tests passed!');
   } catch (error) {
     core.setFailed(error.message);
   }

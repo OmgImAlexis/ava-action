@@ -4,7 +4,7 @@ on: push
 
 jobs:
   lint:
-    name: Lint code
+    name: Test code
     runs-on: ubuntu-latest
 
     steps:
@@ -15,11 +15,11 @@ jobs:
         entrypoint: npm
         args: ci
 
-    - name: Lint
+    - name: Test
       uses: docker://node:10-alpine
       with:
         entrypoint: npm
-        args: run lint
+        args: run test
 
   test:
     name: Test action against own code
@@ -33,9 +33,8 @@ jobs:
         entrypoint: npm
         args: ci
 
-    # uses: stoe/xo-action@master
-    - name: Lint
-      uses: omgimalexis/xo-action@master
+    - name: Test
+      uses: omgimalexis/ava-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:

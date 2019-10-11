@@ -91,11 +91,11 @@ const run = async () => {
       return [];
     });
 
-    const errorCount = results.fail;
+    const errorCount = results.testsFailed;
     const conclusion = errorCount >= 1 ? 'failure' : 'success';
 
     for (const test of results.failedTests) {
-      const {path, startLine, endLine} = test;
+      const {path, startLine, endLine, name} = test;
 
       annotations.push({
         title: name,
@@ -114,9 +114,13 @@ const run = async () => {
       );
     }
 
-    await updateCheck({summary, conclusion, annotations}).catch(error => {
-      core.setFailed(error.message);
-    });
+    if (process.env.DEBUG) {
+      console.info({summary, conclusion, annotations, errorCount, results});
+    } else {
+      await updateCheck({summary, conclusion, annotations}).catch(error => {
+        core.setFailed(error.message);
+      });
+    }
 
     if (errorCount > 0) {
       core.setFailed(`:x: Some test${errorCount === 1 ? '' : 's'} failed!`);

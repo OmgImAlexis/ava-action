@@ -1,19 +1,19 @@
-# xo-action
+# ava-action
 
-> ❤️ JavaScript happiness style linter GitHub Action
+> 🚀 JavaScript test runner
 
 
 ## Usage
 To use the action simply add the following lines to your `.github/workflows/main.yml`.
 
 ```yaml
-- name: xo
-  uses: stoe/xo-action@master
+- name: ava
+  uses: omgimalexis/ava-action@master
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 
-## License [![license](https://img.shields.io/github/license/stoe/xo-action.svg)](https://github.com/stoe/xo-action/blob/master/license)
+## License [![license](https://img.shields.io/github/license/omgimalexis/ava-action.svg)](https://github.com/omgimalexis/ava-action/blob/master/license)
 
-MIT © [Stefan Stölzle](https://github.com/stoe)
+MIT © [Alexis Tyler](https://github.com/omgimalexis)

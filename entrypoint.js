@@ -95,7 +95,15 @@ const run = async () => {
     const conclusion = errorCount >= 1 ? 'failure' : 'success';
 
     for (const test of results.failedTests) {
-      const {path, startLine, endLine, name} = test;
+      const {path, startLine, endLine, name, raw} = test;
+
+      // name: AssertionError
+      // assertion: is
+      // values:
+      // 'Difference:': | -
+      //   - 1
+      //   + 2
+      // at: 'is (test.js:4:5)
 
       annotations.push({
         title: name,
@@ -103,8 +111,8 @@ const run = async () => {
         start_line: startLine,
         end_line: endLine,
         annotation_level: 'failure',
-        message: `\`${test.stackTrace.stackTrace.Difference}\``,
-        raw_details: ''
+        message: `${'```'}${JSON.stringify(raw.diag.values, null, 2)}${'```'}`,
+        raw_details: JSON.stringify(raw, null, 2)
       });
     }
 

@@ -11,7 +11,7 @@ const workspace = process.env.GITHUB_WORKSPACE;
 
 // Returns results from ava command
 const runAva = async options => {
-  const binDirPath = path.join(workspace, 'node_modules', '.bin');
+  const binDirPath = path.join(__dirname, 'node_modules', '.bin');
   const avaPath = path.join(binDirPath, 'ava');
   const avaTapPath = path.join(binDirPath, 'ava-tap-json-parser');
   const ava = `${avaPath} ${options.join(' ')}`;
@@ -97,21 +97,13 @@ const run = async () => {
     for (const test of results.failedTests) {
       const {path, startLine, endLine, name, raw} = test;
 
-      // name: AssertionError
-      // assertion: is
-      // values:
-      // 'Difference:': | -
-      //   - 1
-      //   + 2
-      // at: 'is (test.js:4:5)
-
       annotations.push({
         title: name,
         path,
         start_line: startLine,
         end_line: endLine,
         annotation_level: 'failure',
-        message: JSON.stringify(raw.diag.values, null, 2),
+        message: raw.diag.message,
         raw_details: JSON.stringify(raw, null, 2)
       });
     }

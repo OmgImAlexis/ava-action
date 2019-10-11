@@ -111,7 +111,7 @@ const run = async () => {
         start_line: startLine,
         end_line: endLine,
         annotation_level: 'failure',
-        message: raw.diag.values,
+        message: JSON.stringify(raw.diag.values, null, 2),
         raw_details: JSON.stringify(raw, null, 2)
       });
     }

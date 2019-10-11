@@ -103,8 +103,8 @@ const run = async () => {
         start_line: startLine,
         end_line: endLine,
         annotation_level: 'failure',
-        message: `\`${test.stackTrace.stackTrace.Difference}\``
-        // raw_details: ''
+        message: `\`${test.stackTrace.stackTrace.Difference}\``,
+        raw_details: ''
       });
     }
 

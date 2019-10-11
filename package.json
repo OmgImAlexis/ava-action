@@ -31,7 +31,7 @@
     "@actions/exec": "^1.0.1",
     "@actions/github": "^1.1.0",
     "ava": "^2.4.0",
-    "ava-tap-json-parser": "github:omgimalexis/ava-tap-json-parser#master"
+    "ava-tap-json-parser": "https://github.com/omgimalexis/ava-tap-json-parser/archive/master.tar.gz"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.3",

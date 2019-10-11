@@ -18,10 +18,19 @@ const runAva = async options => {
   const avaCommand = `${ava} | ${avaTapPath}`;
   const parseStdout = ({stdout}) => JSON.parse(stdout);
 
+  // Used for debugging tap parser
+  const parseStdoutAndLog = ({stdout}) => {
+    try {
+      return JSON.parse(stdout);
+    } catch (error) {
+      console.info({stdout});
+    }
+  };
+
   return promisifiedExec(avaCommand, {
     cwd: workspace
   })
-    .then(parseStdout)
+    .then(process.env.LOG ? parseStdoutAndLog : parseStdout)
     .catch(parseStdout);
 };
 
@@ -86,7 +95,7 @@ const run = async () => {
     const summary = [];
 
     // Run ava command
-    const results = await runAva(['--tap']).catch(error => {
+    const results = await runAva(['--tap', '--fail-fast']).catch(error => {
       core.setFailed(error.message);
       return [];
     });

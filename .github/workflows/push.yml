@@ -10,13 +10,13 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: Install deps
-      uses: docker://node:10-alpine
+      uses: node:10-alpine
       with:
         entrypoint: npm
         args: ci
 
     - name: Test
-      uses: docker://node:10-alpine
+      uses: node:10-alpine
       with:
         entrypoint: npm
         args: run test
@@ -28,7 +28,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: Install deps
-      uses: docker://node:10-alpine
+      uses: node:10-alpine
       with:
         entrypoint: npm
         args: ci

@@ -1,9 +1,9 @@
 const test = require('ava');
 
 test('basic test', t => {
-  t.is(1, 2);
+  t.is(1, 1);
 });
 
 test('another basic test', t => {
-  t.is(2, 1);
+  t.is(2, 2);
 });
